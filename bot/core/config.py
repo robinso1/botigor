@@ -5,7 +5,7 @@ import os
 
 class Settings(BaseSettings):
     # Bot settings
-    BOT_TOKEN: str = "8088472710:AAGVrnSFFRN0EICRlDTGEedmRpcPeo3y5z8"
+    BOT_TOKEN: str
     ADMIN_IDS: List[int] = [922721753, 6104831967]
     
     # Database settings
