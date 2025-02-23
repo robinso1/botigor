@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: lead-bot
+    env: docker
+    region: frankfurt  # Европейский регион для лучшей производительности
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: BOT_TOKEN
+        sync: false  # Позволяет установить значение через веб-интерфейс
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    disk:
+      name: sqlite
+      mountPath: /app/data
+      sizeGB: 1 
