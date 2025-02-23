@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: worker
     name: lead-bot
     env: docker
     region: frankfurt  # Европейский регион для лучшей производительности
@@ -10,7 +10,9 @@ services:
         sync: false  # Позволяет установить значение через веб-интерфейс
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: RENDER
+        value: true
     disk:
-      name: sqlite
+      name: data
       mountPath: /app/data
       sizeGB: 1 

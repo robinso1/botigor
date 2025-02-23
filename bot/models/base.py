@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from bot.core.config import settings
 import logging
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,10 @@ def get_engine():
     """Get or create SQLAlchemy engine."""
     global _engine
     if _engine is None:
+        # Ensure data directory exists
+        if os.getenv("RENDER"):
+            os.makedirs("/app/data", exist_ok=True)
+        
         _engine = create_async_engine(
             settings.DATABASE_URL,
             echo=True,
