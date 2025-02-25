@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.models.lead import Lead, LeadDistribution
 from bot.models.user import User
 from bot.core.config import settings
+from bot.services.demo_data import generate_demo_lead, mask_phone
 import random
 
 class DistributionService:
@@ -90,16 +91,9 @@ class DistributionService:
 
     async def create_demo_lead(self) -> Lead:
         """Create a demo lead for testing."""
-        demo_data = {
-            "name": random.choice(["Иван", "Петр", "Анна", "Мария"]),
-            "phone": f"+7{random.randint(9000000000, 9999999999)}",
-            "category": random.choice(settings.CATEGORIES),
-            "city": random.choice(settings.CITIES),
-            "description": "Демонстрационная заявка для тестирования",
-            "area": random.randint(30, 150),
-            "source_chat_id": 0,
-            "source_message_id": 0
-        }
+        category = random.choice(settings.CATEGORIES)
+        city = random.choice(settings.CITIES)
+        demo_data = generate_demo_lead(category, city)
         
         lead = Lead(**demo_data)
         self.session.add(lead)
@@ -127,4 +121,31 @@ class DistributionService:
             distribution.viewed_at = datetime.utcnow()
             await self.session.commit()
             
-        return distribution 
+        return distribution
+
+    def format_lead_for_user(self, lead: Lead, user: User) -> str:
+        """Format lead data for sending to user with phone masking."""
+        message_parts = []
+        
+        if lead.name:
+            message_parts.append(f"👤 Имя: {lead.name}")
+        
+        if lead.phone:
+            masked_phone = mask_phone(lead.phone, user.is_paid)
+            message_parts.append(f"📱 Телефон: {masked_phone}")
+        
+        message_parts.extend([
+            f"🏢 Город: {lead.city}",
+            f"📋 Категория: {lead.category}"
+        ])
+        
+        if lead.area:
+            message_parts.append(f"📐 Площадь: {lead.area} м²")
+        
+        message_parts.append("\n📝 Описание:")
+        message_parts.append(lead.description)
+        
+        if not user.is_paid:
+            message_parts.append("\n⚠️ Для просмотра полного номера телефона необходимо оплатить доступ.")
+        
+        return "\n".join(message_parts) 

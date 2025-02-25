@@ -10,6 +10,7 @@ class User(Base):
     username = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    is_paid = Column(Boolean, default=False)
     categories = Column(JSON, default=list)
     cities = Column(JSON, default=list)
     is_demo = Column(Boolean, default=False)
