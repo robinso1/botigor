@@ -1,1 +1,0 @@
-web: gunicorn 'bot.__main__:create_app_sync()' --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker 

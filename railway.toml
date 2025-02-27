@@ -1,12 +1,11 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install aiohttp gunicorn"
+buildCommand = "pip install aiohttp"
 
 [deploy]
-startCommand = "gunicorn 'bot.__main__:create_app_sync()' --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker"
+startCommand = "python -m bot"
 healthcheckPath = "/health"
 healthcheckTimeout = 5
 
 [env]
-PYTHON_VERSION = "3.11"
-PORT = "8000" 
+PYTHON_VERSION = "3.11" 
