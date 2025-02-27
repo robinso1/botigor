@@ -5,8 +5,10 @@ buildCommand = "pip install -r requirements.txt"
 [deploy]
 startCommand = "alembic upgrade head && python -m bot"
 healthcheckPath = "/health"
-healthcheckTimeout = 100
-restartPolicy = "always"
+healthcheckTimeout = 300
+healthcheckInterval = 60
+restartPolicy = "on-failure"
 
 [env]
-PYTHON_VERSION = "3.11" 
+PYTHON_VERSION = "3.11"
+PORT = "8000" 

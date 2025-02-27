@@ -21,15 +21,30 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def on_startup(bot: Bot, app: web.Application) -> None:
-    """Действия при запуске бота."""
+async def health_check(request):
+    """Health check endpoint for Railway."""
     try:
-        # Устанавливаем вебхук для бота
+        # Проверяем подключение к боту
+        bot = request.app["bot"]
+        me = await bot.get_me()
+        return web.Response(
+            text=f"Bot {me.username} is running",
+            status=200
+        )
+    except Exception as e:
+        logger.error(f"Healthcheck failed: {str(e)}")
+        return web.Response(
+            text="Bot is not responding",
+            status=500
+        )
+
+async def on_startup(app):
+    """Startup handler."""
+    try:
+        bot = app["bot"]
+        # Устанавливаем вебхук
         if settings.WEBHOOK_URL:
-            await bot.set_webhook(
-                url=settings.WEBHOOK_URL,
-                drop_pending_updates=True
-            )
+            await bot.set_webhook(settings.WEBHOOK_URL)
             logger.info(f"Webhook set to {settings.WEBHOOK_URL}")
         
         # Запускаем планировщик
@@ -38,7 +53,7 @@ async def on_startup(bot: Bot, app: web.Application) -> None:
         app["scheduler"] = scheduler
         logger.info("Scheduler started")
         
-        # Уведомляем администраторов о запуске
+        # Уведомляем администраторов
         for admin_id in settings.ADMIN_IDS:
             try:
                 await bot.send_message(
@@ -47,14 +62,14 @@ async def on_startup(bot: Bot, app: web.Application) -> None:
                 )
             except Exception as e:
                 logger.error(f"Failed to notify admin {admin_id}: {str(e)}")
-                
     except Exception as e:
-        logger.error(f"Error in startup: {str(e)}", exc_info=True)
+        logger.error(f"Startup error: {str(e)}")
         raise
 
-async def on_shutdown(bot: Bot, app: web.Application) -> None:
-    """Действия при остановке бота."""
+async def on_shutdown(app):
+    """Shutdown handler."""
     try:
+        bot = app["bot"]
         # Останавливаем планировщик
         if "scheduler" in app:
             app["scheduler"].stop()
@@ -77,31 +92,25 @@ async def on_shutdown(bot: Bot, app: web.Application) -> None:
                 )
             except Exception as e:
                 logger.error(f"Failed to notify admin {admin_id}: {str(e)}")
-                
     except Exception as e:
-        logger.error(f"Error in shutdown: {str(e)}", exc_info=True)
-
-async def health_check(request):
-    """Health check endpoint for Railway."""
-    return web.Response(text="OK", status=200)
+        logger.error(f"Shutdown error: {str(e)}")
 
 async def create_app():
-    """Create and configure application."""
+    """Create and configure aiohttp application."""
+    # Создаем приложение
+    app = web.Application()
+    
     # Инициализация бота и диспетчера
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
     
-    # Создаем приложение
-    app = web.Application()
-    
-    # Добавляем эндпоинт для проверки работоспособности
-    app.router.add_get('/health', health_check)
+    # Сохраняем их в приложении
+    app["bot"] = bot
+    app["dp"] = dp
     
     # Инициализация базы данных
     session_maker = get_session_maker()
     app["session_maker"] = session_maker
-    app["bot"] = bot
-    app["dp"] = dp
     
     # Регистрация middleware
     dp.message.middleware(DatabaseMiddleware())
@@ -113,45 +122,25 @@ async def create_app():
     dp.include_router(subscription.router)
     dp.include_router(admin.router)
     
-    # Настройка вебхуков
+    # Настройка маршрутов
+    app.router.add_get('/health', health_check)
     if settings.WEBHOOK_URL:
         webhook.setup_webhook_routes(app)
-        
-        # Регистрация хендлеров запуска/остановки
-        app.on_startup.append(lambda app: on_startup(bot, app))
-        app.on_shutdown.append(lambda app: on_shutdown(bot, app))
+    
+    # Регистрация хендлеров запуска/остановки
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
     
     return app
 
-async def main():
-    """Entry point for running the bot."""
-    app = await create_app()
-    
-    if settings.WEBHOOK_URL:
-        # Запуск веб-сервера
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(
-            runner,
-            settings.WEB_SERVER_HOST,
-            settings.WEB_SERVER_PORT
-        )
-        await site.start()
-        logger.info(f"Web server started at {settings.WEB_SERVER_HOST}:{settings.WEB_SERVER_PORT}")
-        
-        # Запускаем бесконечный цикл
-        await asyncio.Event().wait()
-    else:
-        # Запуск в режиме long polling
-        dp = app["dp"]
-        bot = app["bot"]
-        await on_startup(bot, app)
-        await dp.start_polling(bot)
+def create_app_sync():
+    """Synchronous wrapper for create_app."""
+    return asyncio.get_event_loop().run_until_complete(create_app())
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        logger.info("Bot stopped")
-    except Exception as e:
-        logger.error(f"Fatal error: {str(e)}", exc_info=True) 
+    app = create_app_sync()
+    web.run_app(
+        app,
+        host=settings.WEB_SERVER_HOST,
+        port=settings.WEB_SERVER_PORT
+    ) 
