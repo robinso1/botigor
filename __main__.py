@@ -85,67 +85,68 @@ async def health_check(request):
     """Health check endpoint for Railway."""
     return web.Response(text="OK", status=200)
 
-async def main() -> None:
-    """Основная функция запуска бота."""
-    try:
-        # Инициализация бота и диспетчера
-        bot = Bot(token=settings.BOT_TOKEN)
-        dp = Dispatcher(storage=MemoryStorage())
+async def create_app():
+    """Create and configure application."""
+    # Инициализация бота и диспетчера
+    bot = Bot(token=settings.BOT_TOKEN)
+    dp = Dispatcher(storage=MemoryStorage())
+    
+    # Создаем приложение
+    app = web.Application()
+    
+    # Добавляем эндпоинт для проверки работоспособности
+    app.router.add_get('/health', health_check)
+    
+    # Инициализация базы данных
+    session_maker = get_session_maker()
+    app["session_maker"] = session_maker
+    app["bot"] = bot
+    app["dp"] = dp
+    
+    # Регистрация middleware
+    dp.message.middleware(DatabaseMiddleware())
+    dp.callback_query.middleware(DatabaseMiddleware())
+    
+    # Регистрация хендлеров
+    dp.include_router(base.router)
+    dp.include_router(settings_handler.router)
+    dp.include_router(subscription.router)
+    dp.include_router(admin.router)
+    
+    # Настройка вебхуков
+    if settings.WEBHOOK_URL:
+        webhook.setup_webhook_routes(app)
         
-        # Создаем приложение
-        app = web.Application()
+        # Регистрация хендлеров запуска/остановки
+        app.on_startup.append(lambda app: on_startup(bot, app))
+        app.on_shutdown.append(lambda app: on_shutdown(bot, app))
+    
+    return app
+
+async def main():
+    """Entry point for running the bot."""
+    app = await create_app()
+    
+    if settings.WEBHOOK_URL:
+        # Запуск веб-сервера
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(
+            runner,
+            settings.WEB_SERVER_HOST,
+            settings.WEB_SERVER_PORT
+        )
+        await site.start()
+        logger.info(f"Web server started at {settings.WEB_SERVER_HOST}:{settings.WEB_SERVER_PORT}")
         
-        # Добавляем эндпоинт для проверки работоспособности
-        app.router.add_get('/health', health_check)
-        
-        # Инициализация базы данных
-        session_maker = get_session_maker()
-        app["session_maker"] = session_maker
-        
-        # Регистрация middleware
-        dp.message.middleware(DatabaseMiddleware())
-        dp.callback_query.middleware(DatabaseMiddleware())
-        
-        # Регистрация хендлеров
-        dp.include_router(base.router)
-        dp.include_router(settings_handler.router)
-        dp.include_router(subscription.router)
-        dp.include_router(admin.router)
-        
-        # Настройка вебхуков
-        if settings.WEBHOOK_URL:
-            webhook.setup_webhook_routes(app)
-            app["bot"] = bot
-            app["dp"] = dp
-            
-            # Регистрация хендлеров запуска/остановки
-            app.on_startup.append(lambda app: on_startup(bot, app))
-            app.on_shutdown.append(lambda app: on_shutdown(bot, app))
-            
-            # Запуск веб-сервера
-            runner = web.AppRunner(app)
-            await runner.setup()
-            site = web.TCPSite(
-                runner,
-                settings.WEB_SERVER_HOST,
-                settings.WEB_SERVER_PORT
-            )
-            await site.start()
-            logger.info(f"Web server started at {settings.WEB_SERVER_HOST}:{settings.WEB_SERVER_PORT}")
-            
-            # Запускаем бесконечный цикл
-            await asyncio.Event().wait()
-            
-        else:
-            # Запуск в режиме long polling
-            await on_startup(bot, app)
-            await dp.start_polling(bot)
-            
-    except Exception as e:
-        logger.error(f"Error in main: {str(e)}", exc_info=True)
-        raise
-    finally:
-        await on_shutdown(bot, app)
+        # Запускаем бесконечный цикл
+        await asyncio.Event().wait()
+    else:
+        # Запуск в режиме long polling
+        dp = app["dp"]
+        bot = app["bot"]
+        await on_startup(bot, app)
+        await dp.start_polling(bot)
 
 if __name__ == "__main__":
     try:

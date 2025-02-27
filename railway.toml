@@ -6,8 +6,7 @@ buildCommand = "pip install -r requirements.txt"
 startCommand = "alembic upgrade head && python -m bot"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
-restartPolicyType = "on-failure"
-restartPolicyMaxRetries = 10
+restartPolicy = "always"
 
 [env]
 PYTHON_VERSION = "3.11" 

@@ -1,1 +1,1 @@
-web: gunicorn bot.__main__:main --worker-class aiohttp.worker.GunicornWebWorker --bind 0.0.0.0:$PORT 
+web: alembic upgrade head && gunicorn "bot.__main__:create_app()" --worker-class aiohttp.GunicornWebWorker --bind 0.0.0.0:$PORT 
