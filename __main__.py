@@ -81,6 +81,10 @@ async def on_shutdown(bot: Bot, app: web.Application) -> None:
     except Exception as e:
         logger.error(f"Error in shutdown: {str(e)}", exc_info=True)
 
+async def health_check(request):
+    """Health check endpoint for Railway."""
+    return web.Response(text="OK", status=200)
+
 async def main() -> None:
     """Основная функция запуска бота."""
     try:
@@ -90,6 +94,9 @@ async def main() -> None:
         
         # Создаем приложение
         app = web.Application()
+        
+        # Добавляем эндпоинт для проверки работоспособности
+        app.router.add_get('/health', health_check)
         
         # Инициализация базы данных
         session_maker = get_session_maker()

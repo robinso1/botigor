@@ -1,0 +1,1 @@
+web: gunicorn bot.__main__:main --worker-class aiohttp.worker.GunicornWebWorker --bind 0.0.0.0:$PORT 
