@@ -1,11 +1,13 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install aiohttp"
+buildCommand = "pip install flask"
 
 [deploy]
 startCommand = "python -m bot"
 healthcheckPath = "/health"
-healthcheckTimeout = 5
+healthcheckTimeout = 10
 
 [env]
-PYTHON_VERSION = "3.11" 
+PYTHON_VERSION = "3.11"
+FLASK_APP = "bot"
+FLASK_ENV = "production" 
