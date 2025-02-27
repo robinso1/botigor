@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List, Dict
+from typing import List, Dict, Optional
 from pathlib import Path
 import os
 
@@ -17,9 +17,21 @@ class Settings(BaseSettings):
     DEMO_LEADS_PER_DAY: int = 5  # number of demo leads per user per day
     
     # Payment settings
-    YOOKASSA_SHOP_ID: str = ""
-    YOOKASSA_SECRET_KEY: str = ""
-    YOOKASSA_RETURN_URL: str = "https://t.me/your_bot"  # URL для возврата после оплаты
+    YOOKASSA_SHOP_ID: Optional[str] = ""
+    YOOKASSA_SECRET_KEY: Optional[str] = ""
+    YOOKASSA_RETURN_URL: Optional[str] = "https://t.me/your_bot"  # URL для возврата после оплаты
+    
+    # Web server settings
+    WEB_SERVER_HOST: str = "0.0.0.0"
+    WEB_SERVER_PORT: int = 8000
+    
+    # Redis settings
+    REDIS_URL: str = "redis://localhost"
+    
+    # Webhook settings
+    WEBHOOK_HOST: Optional[str] = ""
+    WEBHOOK_PATH: str = "/webhook/bot"
+    WEBHOOK_URL: Optional[str] = ""
     
     # Subscription plans
     SUBSCRIPTION_PLANS: Dict[str, Dict] = {
@@ -125,5 +137,6 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "allow"  # Allow extra fields from .env file
 
 settings = Settings() 
