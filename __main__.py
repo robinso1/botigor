@@ -22,21 +22,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def health_check(request):
-    """Health check endpoint for Railway."""
-    try:
-        # Проверяем подключение к боту
-        bot = request.app["bot"]
-        me = await bot.get_me()
-        return web.Response(
-            text=f"Bot {me.username} is running",
-            status=200
-        )
-    except Exception as e:
-        logger.error(f"Healthcheck failed: {str(e)}")
-        return web.Response(
-            text="Bot is not responding",
-            status=500
-        )
+    """Simple health check endpoint."""
+    return web.Response(text="OK", status=200)
 
 async def on_startup(app):
     """Startup handler."""
@@ -97,7 +84,6 @@ async def on_shutdown(app):
 
 async def create_app():
     """Create and configure aiohttp application."""
-    # Создаем приложение
     app = web.Application()
     
     # Инициализация бота и диспетчера
