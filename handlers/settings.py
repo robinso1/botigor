@@ -365,4 +365,90 @@ async def handle_demo(message: types.Message, session: AsyncSession):
             "1. Убедитесь, что выбраны категории и города\n"
             "2. Попробуйте еще раз через несколько минут\n"
             "3. Если ошибка повторяется, обратитесь к администратору"
+        )
+
+async def show_current_settings(message: types.Message, state: FSMContext):
+    """Show current user settings with detailed statistics"""
+    user = await get_user_by_telegram_id(message.from_user.id)
+    if not user:
+        await message.answer("❌ Ошибка: пользователь не найден. Пожалуйста, начните регистрацию заново.")
+        return
+
+    # Get statistics
+    total_leads = await get_user_total_leads(user.id)
+    today_leads = await get_user_today_leads(user.id)
+    active_leads = await get_user_active_leads(user.id)
+    conversion_rate = await calculate_user_conversion_rate(user.id)
+    
+    settings_text = [
+        "📊 <b>Ваши текущие настройки:</b>\n",
+        f"🆔 ID: {user.id}",
+        f"📱 Telegram ID: {user.telegram_id}",
+        f"\n📋 <b>Категории заявок:</b>",
+        "\n".join(f"• {cat}" for cat in user.categories) if user.categories else "Не выбраны",
+        f"\n🏙 <b>Города:</b>",
+        "\n".join(f"• {city}" for city in user.cities) if user.cities else "Не выбраны",
+        f"\n🎯 <b>Демо-режим:</b> {'✅ Включен' if user.demo_mode else '❌ Выключен'}",
+        f"\n📈 <b>Статистика:</b>",
+        f"• Всего получено заявок: {total_leads}",
+        f"• Заявок за сегодня: {today_leads}",
+        f"• Активных заявок: {active_leads}",
+        f"• Конверсия: {conversion_rate:.1f}%",
+        f"\n💰 <b>Тариф:</b> {user.subscription_plan}",
+        f"• Осталось заявок: {user.leads_limit}"
+    ]
+    
+    await message.answer("\n".join(settings_text), parse_mode=types.ParseMode.HTML)
+
+async def process_categories_done(message: types.Message, state: FSMContext):
+    """Process selected categories and show current settings"""
+    try:
+        state_data = await state.get_data()
+        selected_categories = state_data.get("selected_categories", [])
+        
+        if not selected_categories:
+            await message.answer("⚠️ Вы не выбрали ни одной категории. Пожалуйста, выберите хотя бы одну категорию.")
+            return
+            
+        user = await get_user_by_telegram_id(message.from_user.id)
+        if not user:
+            await message.answer("❌ Ошибка: пользователь не найден. Пожалуйста, начните регистрацию заново.")
+            return
+            
+        # Save old categories for comparison
+        old_categories = set(user.categories)
+        new_categories = set(selected_categories)
+        
+        # Update categories
+        user.categories = selected_categories
+        await user.save()
+        
+        # Generate changes summary
+        added = new_categories - old_categories
+        removed = old_categories - new_categories
+        
+        changes_text = []
+        if added:
+            changes_text.append(f"✅ Добавлены категории:\n" + "\n".join(f"• {cat}" for cat in added))
+        if removed:
+            changes_text.append(f"❌ Удалены категории:\n" + "\n".join(f"• {cat}" for cat in removed))
+        
+        # Show confirmation and current settings
+        await message.answer(
+            "✨ Категории успешно обновлены!\n\n" + 
+            ("\n\n".join(changes_text) if changes_text else "Изменений нет") +
+            "\n"
+        )
+        
+        await show_current_settings(message, state)
+        
+        # If demo mode is active and it's working hours, send a demo lead
+        if user.demo_mode and is_working_hours():
+            await send_demo_lead(user)
+            
+    except Exception as e:
+        logger.error(f"Error saving categories: {e}")
+        await message.answer(
+            "❌ Произошла ошибка при сохранении категорий.\n"
+            "Пожалуйста, попробуйте еще раз или обратитесь в поддержку."
         ) 
