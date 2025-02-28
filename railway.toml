@@ -9,5 +9,5 @@ healthcheckTimeout = 300
 restartPolicy = "on-failure"
 
 [env]
-PYTHON_VERSION = "3.11"
+PYTHON_VERSION = "3.12"
 PORT = "8000" 
