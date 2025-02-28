@@ -14,3 +14,6 @@ RENDER = "1"
 
 [nixpacks]
 python_version = "3.11.7"
+
+[nixpacks.build.env]
+NIXPACKS_PYTHON_BUILD_DEPS = "gcc python3-dev"
