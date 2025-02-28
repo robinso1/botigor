@@ -47,8 +47,8 @@ class DistributionService:
                 query = (
                     select(User)
                     .where(
-                        and_(
-                            User.is_active == True,
+            and_(
+                User.is_active == True,
                             User.categories.contains([category]),
                             User.cities.contains([city])
                         )
@@ -162,7 +162,7 @@ class DistributionService:
         
         async def fetch_subscription():
             query = select(Subscription).where(
-                and_(
+                    and_(
                     Subscription.user_id == user_id,
                     Subscription.is_active == True,
                     Subscription.expires_at > datetime.utcnow()
@@ -392,7 +392,7 @@ class DistributionService:
             if lead.category == "Установка окон":
                 message_parts.append(f"🪟 Количество окон: {int(lead.area)} шт.")
             else:
-                message_parts.append(f"📐 Площадь: {lead.area} м²")
+            message_parts.append(f"📐 Площадь: {lead.area} м²")
         
         message_parts.append("\n📝 Описание:")
         message_parts.append(lead.description)
