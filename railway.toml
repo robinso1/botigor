@@ -3,13 +3,14 @@ builder = "nixpacks"
 buildCommand = "pip install --no-cache-dir -r requirements.txt"
 
 [deploy]
-startCommand = "gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker --workers 1 --timeout 120"
+startCommand = "alembic upgrade head && gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker --workers 1 --timeout 120"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 
 [env]
 PYTHON_VERSION = "3.11.7"
 PORT = "8000"
+RENDER = "1"
 
 [nixpacks]
 python_version = "3.11.7"
