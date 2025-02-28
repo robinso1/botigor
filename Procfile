@@ -1,1 +1,1 @@
-web: gunicorn health:app --bind 0.0.0.0:$PORT 
+web: gunicorn "app:create_app()" --worker-class aiohttp.GunicornWebWorker --bind 0.0.0.0:$PORT 
