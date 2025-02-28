@@ -3,15 +3,13 @@ builder = "nixpacks"
 buildCommand = "pip install --no-cache-dir -r requirements.txt"
 
 [deploy]
-startCommand = "gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker --workers 1 --timeout 120 --graceful-timeout 60 --keep-alive 5"
+startCommand = "gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker --workers 1 --timeout 120"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
-healthcheckInterval = 30
-restartPolicy = "on-failure"
 
 [env]
 PYTHON_VERSION = "3.11.7"
 PORT = "8000"
 
 [nixpacks]
-python_version = "3.11.7" 
+python_version = "3.11.7"
