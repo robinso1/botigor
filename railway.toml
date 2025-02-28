@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install --no-cache-dir -r requirements.txt"
+buildCommand = "pip install --no-cache-dir --prefer-binary -r requirements.txt"
 
 [deploy]
 startCommand = "alembic upgrade head && gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker --workers 1 --timeout 120"
@@ -16,4 +16,4 @@ RENDER = "1"
 python_version = "3.11.7"
 
 [nixpacks.build.env]
-NIXPACKS_PYTHON_BUILD_DEPS = "gcc python3-dev"
+NIXPACKS_PYTHON_BUILD_DEPS = "gcc g++ python3-dev libffi-dev"
