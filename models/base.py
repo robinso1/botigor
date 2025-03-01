@@ -1,91 +1,86 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
-from core.config import settings
-import logging
-import asyncio
-import os
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 from contextlib import asynccontextmanager
+import os
+import logging
+from typing import AsyncGenerator
+
+from bot.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Global engine instance
+# Глобальные переменные для хранения движка и фабрики сессий
 _engine = None
-_async_session = None
+_session_maker = None
 
 def get_engine():
-    """Get or create SQLAlchemy engine."""
+    """
+    Создает и возвращает асинхронный движок SQLAlchemy.
+    """
     global _engine
     if _engine is None:
-        # Ensure data directory exists
-        if os.getenv("RENDER"):
-            os.makedirs("/app/data", exist_ok=True)
+        # Получаем URL базы данных из переменных окружения или настроек
+        database_url = os.environ.get("DATABASE_URL", settings.DATABASE_URL)
         
-        # Модифицируем DATABASE_URL для использования asyncpg
-        db_url = settings.DATABASE_URL
-        if db_url.startswith("postgresql://"):
-            db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
-            logger.info(f"Changing DATABASE_URL from {settings.DATABASE_URL} to {db_url} for database engine")
+        # Проверяем, содержит ли URL уже asyncpg
+        if "postgresql://" in database_url and "postgresql+asyncpg://" not in database_url:
+            database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+            logger.info(f"URL базы данных изменен на асинхронный: {database_url[:20]}...")
         
+        logger.info(f"Создание движка базы данных с URL: {database_url[:20]}...")
         _engine = create_async_engine(
-            db_url,
-            echo=True,
-            pool_pre_ping=True,
-            pool_recycle=3600
+            database_url,
+            echo=False,
+            future=True,
+            pool_pre_ping=True
         )
     return _engine
 
 def get_session_maker():
-    """Get or create session maker."""
-    global _async_session
-    if _async_session is None:
-        _async_session = sessionmaker(
+    """
+    Создает и возвращает фабрику асинхронных сессий SQLAlchemy.
+    """
+    global _session_maker
+    if _session_maker is None:
+        _session_maker = async_sessionmaker(
             get_engine(),
-            class_=AsyncSession,
-            expire_on_commit=False
+            expire_on_commit=False,
+            class_=AsyncSession
         )
-    return _async_session
+    return _session_maker
 
 class Base(DeclarativeBase):
+    """Базовый класс для всех моделей."""
     pass
 
 async def init_models():
-    """Initialize database models with retry logic."""
-    max_retries = 3
-    retry_delay = 1  # seconds
-    
-    for attempt in range(max_retries):
-        try:
-            engine = get_engine()
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-            logger.info("Database tables created successfully")
-            return
-        except SQLAlchemyError as e:
-            logger.error(f"Database initialization error (attempt {attempt + 1}/{max_retries}): {e}")
-            if attempt < max_retries - 1:
-                await asyncio.sleep(retry_delay)
-                retry_delay *= 2  # Exponential backoff
-                continue
-            raise
+    """
+    Инициализирует модели, создавая все таблицы в базе данных.
+    """
+    try:
+        engine = get_engine()
+        async with engine.begin() as conn:
+            # Создаем все таблицы
+            # await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Модели успешно инициализированы")
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка при инициализации моделей: {str(e)}")
+        return False
 
 @asynccontextmanager
-async def get_session() -> AsyncSession:
-    """Get database session with automatic cleanup."""
-    session = None
-    try:
-        session = get_session_maker()()
-        yield session
-        if session.is_active:
-            await session.commit()
-    except SQLAlchemyError as e:
-        logger.error(f"Database session error: {e}")
-        if session and session.is_active:
-            await session.rollback()
-        raise
-    finally:
-        if session:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Контекстный менеджер для получения сессии базы данных.
+    """
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        try:
+            yield session
+        finally:
             await session.close()
 
-# For middleware compatibility
+# Создаем сессию при импорте модуля
 async_session = get_session_maker() 
