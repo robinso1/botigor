@@ -1,5 +1,5 @@
 [build]
-builder = "nixpacks"
+builder = "buildpacks"
 buildCommand = "pip install --no-cache-dir --prefer-binary -r requirements.txt"
 watchPatterns = ["requirements.txt"]
 
@@ -14,15 +14,3 @@ restartPolicyMaxRetries = 5
 PYTHON_VERSION = "3.9.18"
 PORT = "8000"
 RENDER = "1"
-
-[nixpacks]
-python_version = "3.9.18"
-
-[nixpacks.setup]
-cmds = ["apt-get update && apt-get install -y libpq-dev gcc"]
-
-[nixpacks.build.env]
-NIXPACKS_PYTHON_BUILD_DEPS = "gcc"
-PIP_EXTRA_INDEX_URL = "https://pypi.org/simple"
-PIP_DISABLE_PIP_VERSION_CHECK = "1"
-PIP_NO_CACHE_DIR = "1"
