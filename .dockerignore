@@ -37,10 +37,6 @@ var/
 *.log
 logs/
 
-# Database
-*.db
-*.sqlite3
-
 # Docker
 .docker/
 docker-compose.override.yml
