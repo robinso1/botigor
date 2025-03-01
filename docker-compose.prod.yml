@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - bot_network
+    volumes:
+      - bot_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - bot_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  bot_data:
+  redis_data:
+
+networks:
+  bot_network:
+    driver: bridge 

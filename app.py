@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 from aiohttp import web
@@ -10,13 +11,11 @@ from bot.services.scheduler import SchedulerService
 from bot.services.cache import CacheService
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
-
-# Инициализация бота
-bot = Bot(token=settings.BOT_TOKEN)
-storage = RedisStorage.from_url(settings.REDIS_URL)
-dp = Dispatcher(storage=storage)
 
 # Создание приложения
 app = web.Application()
@@ -27,6 +26,22 @@ async def health_handler(request):
 
 async def start_bot():
     try:
+        # Инициализация бота
+        bot = Bot(token=settings.BOT_TOKEN)
+        
+        # Инициализация хранилища состояний
+        try:
+            storage = RedisStorage.from_url(settings.REDIS_URL)
+            logger.info(f"Connected to Redis at {settings.REDIS_URL}")
+        except Exception as e:
+            logger.error(f"Failed to connect to Redis: {str(e)}")
+            # Fallback to memory storage if Redis is not available
+            from aiogram.fsm.storage.memory import MemoryStorage
+            storage = MemoryStorage()
+            logger.info("Using MemoryStorage as fallback")
+        
+        dp = Dispatcher(storage=storage)
+        
         # Регистрация хендлеров
         dp.include_router(base.router)
         dp.include_router(settings_handler.router)
@@ -42,6 +57,7 @@ async def start_bot():
         # Добавляем сервисы в middleware
         dp["session_maker"] = session_maker
         dp["cache"] = cache_service
+        dp["bot"] = bot
         
         # Запуск планировщика
         scheduler = SchedulerService(session_maker, bot)
@@ -58,7 +74,7 @@ async def start_bot():
 async def on_startup(app):
     try:
         # Запускаем бота в фоновом режиме
-        asyncio.create_task(start_bot())
+        app["bot_task"] = asyncio.create_task(start_bot())
         logger.info("Bot started successfully")
     except Exception as e:
         logger.error(f"Error in startup: {str(e)}", exc_info=True)
@@ -67,9 +83,14 @@ async def on_startup(app):
 @app.on_shutdown
 async def on_shutdown(app):
     try:
+        # Отменяем задачу бота
+        if "bot_task" in app and not app["bot_task"].done():
+            app["bot_task"].cancel()
+            
         # Закрываем соединения
-        await bot.session.close()
-        await dp.storage.close()
+        if "bot" in app:
+            await app["bot"].session.close()
+            
         logger.info("Bot shutdown completed")
     except Exception as e:
         logger.error(f"Error in shutdown: {str(e)}", exc_info=True)
