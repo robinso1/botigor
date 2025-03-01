@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
-from bot.core.config import settings
+from core.config import settings
 import logging
 import asyncio
 import os
