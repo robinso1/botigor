@@ -21,8 +21,14 @@ def get_engine():
         if os.getenv("RENDER"):
             os.makedirs("/app/data", exist_ok=True)
         
+        # Модифицируем DATABASE_URL для использования asyncpg
+        db_url = settings.DATABASE_URL
+        if db_url.startswith("postgresql://"):
+            db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
+            logger.info(f"Changing DATABASE_URL from {settings.DATABASE_URL} to {db_url} for database engine")
+        
         _engine = create_async_engine(
-            settings.DATABASE_URL,
+            db_url,
             echo=True,
             pool_pre_ping=True,
             pool_recycle=3600
