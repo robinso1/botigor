@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
 # Копирование файлов проекта
 COPY requirements.txt .
 COPY alembic.ini .
-COPY .env .
 
 # Установка зависимостей
 RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
