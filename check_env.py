@@ -44,6 +44,13 @@ def check_env_vars():
         if not os.environ.get(var):
             print(f"WARNING: Optional environment variable {var} is not set.")
     
+    # Модифицируем DATABASE_URL для использования asyncpg
+    db_url = os.environ.get("DATABASE_URL", "")
+    if db_url.startswith("postgresql://"):
+        new_db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
+        print(f"Changing DATABASE_URL from {db_url} to {new_db_url}")
+        os.environ["DATABASE_URL"] = new_db_url
+    
     return True
 
 def main():
