@@ -1,5 +1,5 @@
 [build]
-builder = "buildpacks"
+builder = "heroku-buildpacks"
 buildCommand = "pip install --no-cache-dir --prefer-binary -r requirements.txt"
 watchPatterns = ["requirements.txt"]
 
