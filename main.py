@@ -21,7 +21,7 @@ async def handle_polling_error(event: TelegramAPIError):
     # Notify admins about the error
     bot = Bot(token=settings.BOT_TOKEN)
     try:
-        for admin_id in settings.admin_ids_list:
+        for admin_id in settings.ADMIN_IDS:
             await bot.send_message(
                 admin_id,
                 f"❌ Ошибка в работе бота:\n{str(event)}\n\nБот будет автоматически перезапущен."

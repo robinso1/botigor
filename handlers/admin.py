@@ -19,7 +19,7 @@ class AdminSettingsStates(StatesGroup):
 
 def is_admin(user_id: int) -> bool:
     """Check if user is admin."""
-    return user_id in settings.admin_ids_list
+    return user_id in settings.ADMIN_IDS
 
 def get_admin_keyboard() -> types.InlineKeyboardMarkup:
     """Create admin keyboard markup."""

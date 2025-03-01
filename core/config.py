@@ -6,7 +6,7 @@ import os
 class Settings(BaseSettings):
     # Bot settings
     BOT_TOKEN: str
-    ADMIN_IDS: str = "922721753,6104831967"  # Теперь это строка
+    ADMIN_IDS: List[int] = [922721753, 6104831967]
     
     # Database settings
     DATABASE_URL: str = f"sqlite+aiosqlite:///{'/app/data' if os.getenv('RENDER') else '.'}/bot.db"
@@ -138,12 +138,5 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         extra = "allow"  # Разрешаем дополнительные поля из .env файла
-
-    @property
-    def admin_ids_list(self) -> List[int]:
-        """Преобразует строку ADMIN_IDS в список целых чисел."""
-        if isinstance(self.ADMIN_IDS, str):
-            return [int(x.strip()) for x in self.ADMIN_IDS.split(',') if x.strip()]
-        return []
 
 settings = Settings() 
