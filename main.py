@@ -3,10 +3,10 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.exceptions import TelegramAPIError
-from bot.core.config import settings
-from bot.handlers import base, settings as settings_handlers, admin
-from bot.models.base import init_models
-from bot.middlewares.database import DatabaseMiddleware
+from core.config import settings
+from handlers import base, settings as settings_handlers, admin
+from models.base import init_models
+from middlewares.database import DatabaseMiddleware
 
 # Configure logging
 logging.basicConfig(
