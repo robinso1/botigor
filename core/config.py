@@ -6,14 +6,14 @@ import os
 class Settings(BaseSettings):
     # Bot settings
     BOT_TOKEN: str
-    ADMIN_IDS: List[int] = [922721753, 6104831967]
+    ADMIN_IDS: str = "922721753,6104831967"  # Теперь это строка
     
     # Database settings
     DATABASE_URL: str = f"sqlite+aiosqlite:///{'/app/data' if os.getenv('RENDER') else '.'}/bot.db"
     
     # Distribution settings
     DISTRIBUTION_INTERVAL: int = 3  # hours
-    MAX_RECIPIENTS: int = 3  # maximum number of users to receive one lead
+    MAX_RECIPIENTS: int = 5  # maximum number of users to receive one lead
     DEMO_LEADS_PER_DAY: int = 5  # number of demo leads per user per day
     
     # Payment settings
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     
     # Lead categories and cities
     CATEGORIES: List[str] = [
-        "Ремонт квартир под ключ",
+        "Ремонт помещений",
         "Установка окон",
         "Кухни"
     ]
@@ -137,6 +137,13 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
-        extra = "allow"  # Allow extra fields from .env file
+        extra = "allow"  # Разрешаем дополнительные поля из .env файла
+
+    @property
+    def admin_ids_list(self) -> List[int]:
+        """Преобразует строку ADMIN_IDS в список целых чисел."""
+        if isinstance(self.ADMIN_IDS, str):
+            return [int(x.strip()) for x in self.ADMIN_IDS.split(',') if x.strip()]
+        return []
 
 settings = Settings() 

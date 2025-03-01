@@ -54,7 +54,8 @@ async def cmd_start(message: types.Message, session: AsyncSession):
         user = result.scalar_one_or_none()
         
         logger.info(f"User query result: {user}")
-        is_admin = message.from_user.id in settings.ADMIN_IDS
+        # Проверяем, является ли пользователь администратором
+        is_admin = message.from_user.id in settings.admin_ids_list
         
         if not user:
             logger.info(f"Creating new user: {message.from_user.id}")
@@ -104,8 +105,8 @@ async def cmd_start(message: types.Message, session: AsyncSession):
             "❌ Произошла ошибка при обработке команды.\n"
             "Пожалуйста, попробуйте позже или обратитесь к администратору."
         )
-        # Notify admins about the error
-        for admin_id in settings.ADMIN_IDS:
+        # Отправляем уведомление администраторам
+        for admin_id in settings.admin_ids_list:
             try:
                 await message.bot.send_message(
                     admin_id,
@@ -224,7 +225,7 @@ async def handle_group_message(message: types.Message, session: AsyncSession):
     except Exception as e:
         logger.error(f"Error processing message {message.message_id} in chat {message.chat.id}: {str(e)}")
         # Можно также отправить уведомление администраторам
-        for admin_id in settings.ADMIN_IDS:
+        for admin_id in settings.admin_ids_list:
             try:
                 await message.bot.send_message(
                     admin_id,
@@ -248,5 +249,5 @@ async def handle_private_message(message: types.Message):
         
     await message.answer(
         "👋 Используйте кнопки меню для управления настройками:",
-        reply_markup=get_main_keyboard(message.from_user.id in settings.ADMIN_IDS)
+        reply_markup=get_main_keyboard(message.from_user.id in settings.admin_ids_list)
     ) 
