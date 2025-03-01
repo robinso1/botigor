@@ -22,7 +22,7 @@ def get_engine():
             os.makedirs("/app/data", exist_ok=True)
         
         _engine = create_async_engine(
-            settings.db_url,
+            settings.DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://') if settings.DATABASE_URL.startswith('postgresql://') else settings.DATABASE_URL,
             echo=True,
             pool_pre_ping=True,
             pool_recycle=3600

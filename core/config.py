@@ -11,14 +11,6 @@ class Settings(BaseSettings):
     # Database settings
     DATABASE_URL: str = f"sqlite+aiosqlite:///{'/app/data' if os.getenv('RENDER') else '.'}/bot.db"
     
-    @property
-    def db_url(self) -> str:
-        """Return database URL with the correct driver for async operations."""
-        url = self.DATABASE_URL
-        if url.startswith('postgresql://'):
-            return url.replace('postgresql://', 'postgresql+asyncpg://')
-        return url
-    
     # Distribution settings
     DISTRIBUTION_INTERVAL: int = 3  # hours
     MAX_RECIPIENTS: int = 5  # maximum number of users to receive one lead
