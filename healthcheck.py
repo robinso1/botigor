@@ -35,8 +35,7 @@ def start_bot():
     # Запуск основного приложения
     cmd = [
         sys.executable,
-        "-m",
-        "bot.main",
+        "main.py",
     ]
     
     print(f"Запуск бота с командой: {' '.join(cmd)}")
