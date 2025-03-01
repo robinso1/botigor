@@ -4,11 +4,11 @@ import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 from aiohttp import web
-from bot.core.config import settings
-from bot.core.database import get_session_maker
-from bot.handlers import base, settings as settings_handler, subscription, admin, webhook
-from bot.services.scheduler import SchedulerService
-from bot.services.cache import CacheService
+from core.config import settings
+from models.base import get_session_maker
+from handlers import base, settings as settings_handler, subscription, admin, webhook
+from services.scheduler import SchedulerService
+from services.cache import CacheService
 
 # Настройка логирования
 logging.basicConfig(
