@@ -22,7 +22,7 @@ def get_engine():
             os.makedirs("/app/data", exist_ok=True)
         
         _engine = create_async_engine(
-            settings.DATABASE_URL,
+            settings.db_url,
             echo=True,
             pool_pre_ping=True,
             pool_recycle=3600
