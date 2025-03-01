@@ -21,8 +21,7 @@ fi
 
 # Проверка наличия .env файла
 if [ ! -f .env ]; then
-    echo -e "${RED}Файл .env не найден. Создайте его на основе .env.example.${NC}"
-    exit 1
+    echo -e "${YELLOW}Файл .env не найден. Убедитесь, что все переменные окружения настроены в Railway.${NC}"
 fi
 
 # Проверка подключения к Railway
@@ -36,6 +35,23 @@ fi
 railway whoami
 if [ $? -ne 0 ]; then
     echo -e "${RED}Вы не авторизованы в Railway. Выполните 'railway login'.${NC}"
+    exit 1
+fi
+
+# Проверка переменных окружения в Railway
+echo -e "${YELLOW}Проверка переменных окружения в Railway...${NC}"
+REQUIRED_VARS=("BOT_TOKEN" "DATABASE_URL")
+MISSING_VARS=()
+
+for var in "${REQUIRED_VARS[@]}"; do
+    if ! railway variables get $var &> /dev/null; then
+        MISSING_VARS+=($var)
+    fi
+done
+
+if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+    echo -e "${RED}Отсутствуют обязательные переменные окружения в Railway: ${MISSING_VARS[*]}${NC}"
+    echo -e "${YELLOW}Добавьте их с помощью команды 'railway variables set VAR=VALUE'${NC}"
     exit 1
 fi
 
