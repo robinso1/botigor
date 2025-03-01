@@ -34,16 +34,9 @@ def start_bot():
     
     # Запуск основного приложения
     cmd = [
-        "gunicorn", 
-        "app:create_app()", 
-        "--bind", 
-        "0.0.0.0:8080", 
-        "--worker-class", 
-        "aiohttp.GunicornWebWorker", 
-        "--workers", 
-        "1", 
-        "--timeout", 
-        "120"
+        sys.executable,
+        "-m",
+        "bot.main",
     ]
     
     print(f"Запуск бота с командой: {' '.join(cmd)}")
