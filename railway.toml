@@ -4,7 +4,7 @@ buildCommand = "pip install --no-cache-dir --prefer-binary -r requirements.txt"
 watchPatterns = ["requirements.txt"]
 
 [deploy]
-startCommand = "python healthcheck.py"
+startCommand = "python app.py"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
