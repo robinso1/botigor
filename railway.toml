@@ -1,6 +1,5 @@
 [build]
-builder = "heroku-buildpacks"
-buildpacks = ["heroku/python"]
+builder = "nixpacks"
 
 [deploy]
 startCommand = "python check_env.py && alembic upgrade head && python main.py"
@@ -12,3 +11,10 @@ restartPolicyMaxRetries = 5
 [env]
 PORT = "8000"
 PYTHON_VERSION = "3.9.18"
+NIXPACKS_PYTHON_VERSION = "3.9.18"
+
+[nixpacks]
+python_version = "3.9.18"
+
+[nixpacks.setup]
+cmds = ["apt-get update && apt-get install -y libpq-dev gcc python3-dev"]
