@@ -22,9 +22,4 @@ cmds = [
 ]
 
 [nixpacks.build]
-cmd = "pip install --no-cache-dir -r requirements.txt"
-
-[nixpacks.build.env]
-NIXPACKS_PYTHON_VERSION = "3.9.18"
-NIXPACKS_INSTALL_CMD = "pip install --no-cache-dir -r requirements.txt"
-NIXPACKS_START_CMD = "python check_env.py && alembic upgrade head && python main.py"
+buildCmd = "pip install --no-cache-dir -r requirements.txt"
