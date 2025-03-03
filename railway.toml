@@ -1,5 +1,5 @@
 [build]
-builder = "heroku-buildpacks"
+builder = "buildpacks"
 buildpacks = ["heroku/python"]
 
 [deploy]
