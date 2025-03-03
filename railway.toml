@@ -1,7 +1,8 @@
 [build]
-builder = "heroku"
+builder = "nixpacks"
 
 [deploy]
+startCommand = "python check_env.py && alembic upgrade head && python -m gunicorn app:create_app() --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker --workers 1 --timeout 120"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
@@ -9,3 +10,4 @@ restartPolicyMaxRetries = 5
 
 [env]
 PORT = "8000"
+NIXPACKS_PYTHON_VERSION = "3.9.18"
