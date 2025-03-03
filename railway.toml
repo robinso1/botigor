@@ -18,3 +18,6 @@ python_version = "3.9.18"
 
 [nixpacks.setup]
 cmds = ["apt-get update && apt-get install -y libpq-dev gcc python3-dev"]
+
+[nixpacks.build.env]
+NIXPACKS_PYTHON_PACKAGES = "gcc postgresql python39"
