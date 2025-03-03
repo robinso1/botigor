@@ -1,11 +1,14 @@
 [build]
-builder = "buildpack"
+builder = "heroku-buildpacks"
+buildpacks = ["heroku/python"]
 
 [deploy]
-startCommand = "python check_env.py && alembic upgrade head && python -m gunicorn app:create_app() --bind 0.0.0.0:$PORT --worker-class aiohttp.GunicornWebWorker --workers 1 --timeout 120"
+startCommand = "python check_env.py && alembic upgrade head && python main.py"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
 
 [env]
-NIXPACKS_PYTHON_BUILD_DEPS = ["gcc"]
+PORT = "8000"
+PYTHON_VERSION = "3.9.18"
