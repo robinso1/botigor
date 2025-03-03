@@ -1,6 +1,5 @@
 [build]
-builder = "buildpacks"
-buildpacks = ["heroku/python"]
+builder = "pack"
 
 [deploy]
 startCommand = "python check_env.py && alembic upgrade head && python main.py"
